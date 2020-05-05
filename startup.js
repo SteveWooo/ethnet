@@ -6,56 +6,125 @@ const rlp = require('rlp');
  * 比如：console.log(struct.pack('>H', 30303));
  */
 const struct = require('python-struct');
+const crypto = require('crypto');
+const secp256k1 = require('secp256k1'); // 签名用
+const keccak256 = require('keccak256'); // 哈希用
 const dgram = require('dgram');
+const fs = require('fs');
 const net = require('net');
+const Ip = require('ip')
+const config = {
+    localHost : '127.0.0.1',
+    localPort : 30301
+}
 
+/**
+ * 把一个ip变成4段数字
+ */
+function ipaddress(ip){
+    // ip = ip.split('.');
+    // for(var i=0;i<ip.length;i++) {
+    //     ip[i] = String.fromCharCode(parseInt(ip[i]));
+    // }
+    ip = Ip.toBuffer(ip);
+    console.log(ip)
+    return ip;
+}
+
+let udpServer;
 async function initSock(){
-    let udpServer = dgram.createServer('udp4');
-    udpServer.bind(30301);
+    udpServer = dgram.createSocket('udp4');
+    udpServer.on('listening', function(){
+        console.log('listen udp')
+    })
+    udpServer.on('message', function(msg, remote){
+        console.log('recive:');
+        console.log(msg);
+        // let resultFile = [];
+
+        // for(var i=0;i<msg.length;i++) {
+        //     resultFile.push(`${i}位: ${msg[i]} - ${String.fromCharCode(msg[i])}`);
+        // }
+        // fs.writeFileSync(`${__dirname}/receiveData`, resultFile.join('\n'));
+    })
+    udpServer.bind(config.localPort, config.localHost);
 }
 
 async function ping(ip, tcpport, udpport) {
     let endpointFrom = [];
     //ip
-    endpointFrom.push('127.0.0.1');
+    endpointFrom.push(ipaddress(config.localHost));
     //udpport
-    endpointFrom.push(struct.pack('>H', 10001));
+    endpointFrom.push(config.localPort);
     //tcpport
-    endpointFrom.push(struct.pack('>H', 10002));
+    endpointFrom.push(config.localPort);
 
     let endpointTo = [];
     //ip
-    endpointTo.push(ip);
+    endpointTo.push(ipaddress(ip));
     //udpport
-    endpointTo.push(struct.pack('>H', udpport));
+    endpointTo.push(udpport);
     //tcpport
-    endpointTo.push(struct.pack('>H', tcpport));
+    endpointTo.push(tcpport);
 
     let version = 0x03;
-    let packetType = 0x01;
+    let packetType = 1;
     let time = +new Date();
     // 转换成秒级，再加60秒时间给他到达目标
     time = Math.floor(time / 1000) + 60;
     // 数据包
     let packSouce = [
         version,
-        ...endpointFrom,
-        ...endpointTo,
-        struct.pack('I', time)
+        endpointFrom,
+        endpointTo,
+        time
     ]
+    console.log(packSouce)
 
-    console.log(packSouce);
     let encodePack = rlp.encode(packSouce);
-    let packetTypeBuffer = Buffer.alloc(1);
-    packetTypeBuffer[0] = packetType;
+    // console.log(encodePack);
+    // for(var i=0;i<encodePack.length;i++) {
+    //     console.log(`${encodePack[i]} : ${String.fromCharCode(encodePack[i])}`)
+    // }
 
+
+    let packetTypeBuffer = Buffer.from(String.fromCharCode(packetType));
     let pack = Buffer.concat([packetTypeBuffer, encodePack]);
-    console.log(pack)
-    // console.log(rlp.encode('127.0.0.1'))
+    // pack = pack.toString(); // 转字符串好处理，buffer很难拼接
+
+    // hashid
+    let privateKey = crypto.randomBytes(32);
+    let publicKey = secp256k1.publicKeyCreate(privateKey);
+
+    // 签名 signature, recid
+    let sign = secp256k1.ecdsaSign(keccak256(pack), privateKey);
+    let signBuffer = Buffer.from(sign.signature);
+    // 拼签名
+    // pack = signBuffer.toString() + recid + pack;
+    pack = Buffer.concat([signBuffer, Buffer.from(String.fromCharCode(sign.recid)), pack]);
+
+    let packHash = keccak256(pack);
+    // 拼哈希
+    // pack = packHash.toString() + pack;
+    pack = Buffer.concat([packHash, pack]);
+    let sendFile = [];
+    for(var i=0;i<pack.length;i++) {
+        sendFile.push(`${i}位: ${pack[i]} - ${String.fromCharCode(pack[i])}`);
+    }
+    fs.writeFileSync(`${__dirname}/sentData`, sendFile.join('\n'));
+
+    // let udpClient = dgram.createSocket('udp4');
+    udpServer.send(Buffer.from(pack), udpport, ip, function(){
+        console.log('sent');
+    })
 }
 
 async function main(){
-    // await initSock();
-    await ping('127.0.0.1', 30303, 30304);
+    await initSock();
+    try{
+        await ping('127.0.0.1', 30303, 30303);
+    }catch(e) {
+        console.log(e);
+    }
 }
 main();
