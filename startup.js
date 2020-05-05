@@ -2,17 +2,12 @@
  * 比如：rlp.encode('127.0.0.1')
  */
 const rlp = require('rlp');
-/**
- * 比如：console.log(struct.pack('>H', 30303));
- */
-const struct = require('python-struct');
 const crypto = require('crypto');
 const secp256k1 = require('secp256k1'); // 签名用
 const keccak256 = require('keccak256'); // 哈希用
 const dgram = require('dgram');
 const fs = require('fs');
 const net = require('net');
-const Ip = require('ip')
 const config = {
     localHost : '127.0.0.1',
     localPort : 30301
@@ -22,13 +17,12 @@ const config = {
  * 把一个ip变成4段数字
  */
 function ipaddress(ip){
-    // ip = ip.split('.');
-    // for(var i=0;i<ip.length;i++) {
-    //     ip[i] = String.fromCharCode(parseInt(ip[i]));
-    // }
-    ip = Ip.toBuffer(ip);
-    console.log(ip)
-    return ip;
+    let buf = Buffer.alloc(4);
+    ip = ip.split('.');
+    for(var i=0;i<ip.length;i++) {
+        buf[i] = Buffer.from(String.fromCharCode(parseInt(ip[i])));
+    }
+    return buf;
 }
 
 let udpServer;
@@ -108,10 +102,10 @@ async function ping(ip, tcpport, udpport) {
     // pack = packHash.toString() + pack;
     pack = Buffer.concat([packHash, pack]);
     let sendFile = [];
-    for(var i=0;i<pack.length;i++) {
-        sendFile.push(`${i}位: ${pack[i]} - ${String.fromCharCode(pack[i])}`);
-    }
-    fs.writeFileSync(`${__dirname}/sentData`, sendFile.join('\n'));
+    // for(var i=0;i<pack.length;i++) {
+    //     sendFile.push(`${i}位: ${pack[i]} - ${String.fromCharCode(pack[i])}`);
+    // }
+    // fs.writeFileSync(`${__dirname}/sentData`, sendFile.join('\n'));
 
     // let udpClient = dgram.createSocket('udp4');
     udpServer.send(Buffer.from(pack), udpport, ip, function(){
