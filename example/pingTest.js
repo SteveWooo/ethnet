@@ -3,24 +3,28 @@ const secp256k1 = require('secp256k1'); // 签名用
 const keccak256 = require('keccak256'); // 哈希用
 const crypto = require('crypto');
 const dgram = require('dgram');
-const config = {
+const Config = {
     source : {
         ip : '127.0.0.1',
-        udpport : 30301,
-        tcpport : 30301
+        udpport : 30304,
+        tcpport : 30304
     }
 }
-function initSocket(){
-    let server = dgram.createSocket('udp4');
-    server.on('message', function (msg, remote) {
-        console.log('receive');
-        console.log(msg);
+
+function initSocket(config){
+    return new Promise(resolve=>{
+        let server = dgram.createSocket('udp4');
+        server.on('message', async function (msg, remote) {
+            console.log('receive');
+            console.log(msg);
+            console.log(`receive PackType : ${msg[97]}`);
+        })
+        server.on('listening', async function () {
+            console.log(`listen at ${config.source.udpport}`);
+            resolve(server);
+        })
+        server.bind(config.source.udpport, config.source.ip);
     })
-    server.on('listening', function () {
-        console.log(`listen at ${config.source.udpport}`);
-    })
-    server.bind(config.source.udpport, config.source.ip);
-    return server;
 }
 function getTarget(){
     let target = {
@@ -30,23 +34,38 @@ function getTarget(){
     }
     return target;
 }
-function getPk(){
-    let privateKey = crypto.randomBytes(32);
-    return privateKey;
-}
 
-async function main(){
-    let socket = initSocket();
+/**
+ * 这个socket大家一起用
+ */
+let socket;
+async function main() {
+    socket = await initSocket(Config);
+    await pingTarget();
+}
+async function pingTarget(){
     let target = getTarget();
-    let privateKey = getPk();
-    let source = config.source;
+    let privateKey = require(`${__dirname}/../models/Utils`).getPk();
+    let source = Config.source;
 
-    let ping = new Ping({
-        source: source,
-        target: target,
-        socket: socket,
-        privateKey: privateKey
-    })
-    ping.send();
+    try{
+        let ping = new Ping({
+            source: source,
+            target: target,
+            socket: socket,
+            privateKey: privateKey
+        })
+        await ping.send();
+    }catch(e){
+        console.log(e)
+    }
 }
+
+/**
+ * ping了目标响应之后，调用pong
+ */
+async function pongTarget(){
+
+}
+
 main();

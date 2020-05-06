@@ -20,7 +20,7 @@ function ipaddress(ip){
     let buf = Buffer.alloc(4);
     ip = ip.split('.');
     for(var i=0;i<ip.length;i++) {
-        buf[i] = Buffer.from(String.fromCharCode(parseInt(ip[i])));
+        buf[i] = parseInt(ip[i]);
     }
     return buf;
 }
@@ -81,7 +81,6 @@ async function ping(ip, tcpport, udpport) {
     //     console.log(`${encodePack[i]} : ${String.fromCharCode(encodePack[i])}`)
     // }
 
-
     let packetTypeBuffer = Buffer.from(String.fromCharCode(packetType));
     let pack = Buffer.concat([packetTypeBuffer, encodePack]);
     // pack = pack.toString(); // 转字符串好处理，buffer很难拼接
@@ -101,7 +100,7 @@ async function ping(ip, tcpport, udpport) {
     // 拼哈希
     // pack = packHash.toString() + pack;
     pack = Buffer.concat([packHash, pack]);
-    let sendFile = [];
+    // let sendFile = [];
     // for(var i=0;i<pack.length;i++) {
     //     sendFile.push(`${i}位: ${pack[i]} - ${String.fromCharCode(pack[i])}`);
     // }
