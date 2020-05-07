@@ -8,7 +8,7 @@ exports.getPk = function() {
 /**
  * 把一个ip变成4段Buffer
  */
-exports.ipaddress = function(ip) {
+exports.encodeIpaddress = function(ip) {
     let buf = Buffer.alloc(4);
     ip = ip.split('.');
     for (var i = 0; i < ip.length; i++) {
@@ -16,6 +16,13 @@ exports.ipaddress = function(ip) {
 
     }
     return buf;
+}
+exports.decodeIpaddress = function (buffer) {
+    let ip = [];
+    for(var i=0;i<buffer.length;i++) {
+        ip.push(buffer[i]);
+    }
+    return ip.join('.');
 }
 
 /**
@@ -33,4 +40,17 @@ exports.getSignBuffer = function (privateKey, pack) {
         signBuffer: signBuffer,
         rcidBuffer: rcidBuffer
     }
+}
+
+/**
+ * 把整个数据包拿出来读，一个一个字节看
+ */
+exports.readMsg = function(msg) {
+    let data = [];
+    for(var i=0;i<msg.length;i++) {
+        let temp = `${i}位: ${msg[i]} - ${String.fromCharCode(msg[i])}`;
+        console.log(temp);
+        data.push(temp);
+    }
+    // require('fs').writeFileSync(`${__dirname}/../PongDemo`, data.join('\n'));
 }

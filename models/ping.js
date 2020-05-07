@@ -1,13 +1,15 @@
 const keccak256 = require('keccak256'); // 哈希用
 const rlp = require('rlp');
+const Utils = require(`${__dirname}/Utils`);
 const Config = {
-    version : 0x03,
+    version : 0x04,
     packType : 1 // 1代表ping包，pong是2
 }
 
 /**
  * 构造一个ping对象，主要是构造一个ping包，包主要是数组嵌套，用rlp编码。其中附带发送函数。
- * ping包的结构是：packHash(包括签名)(32位) | sign(64位) | signRcid（1位） | packType（1位） | packSource（rlp）
+ * ping包的结构是：
+ * packHash(包括签名)(32位) | sign(64位) | signRcid（1位） | packType（1位） | packSource（rlp）
  * 其中packHash：keccak256(sign | signRcid | packType | packSource)，出来32位hash
  * 其中sign：ecdsaSign ( keccak256( packType | packSource ) )，出来64位密钥+1位rcid
  * 其中packSource：rlp ( version | endpointFrom | endpointTo | time（秒级整型即可） )
@@ -15,7 +17,7 @@ const Config = {
  * @param target : ip udpport tcpport
  * @param source : ip udpport tcpport
  * @param privateKey 密钥
- * @param socket udpsocket，发送和接收必须用同一个
+ * @param udpSocket udpsocket，发送和接收必须用同一个
  * 
  * @return Ping 一个可用的Ping对象，其中有一个send方法。
  */
@@ -30,14 +32,14 @@ function Ping(param){
         pack
     ])
     // 拿签名，然后拼接sign + signRcid + pack
-    let sign = require(`${__dirname}/Utils`).getSignBuffer(param.privateKey, pack);
+    let sign = Utils.getSignBuffer(param.privateKey, pack);
     pack = Buffer.concat([
         sign.signBuffer,
         sign.rcidBuffer,
         pack
     ])
-    console.log(`signBufferLength : ${sign.signBuffer.length}`);
-    console.log(`rcidBufferBufferLength : ${sign.rcidBuffer.length}`);
+    // console.log(`signBufferLength : ${sign.signBuffer.length}`);
+    // console.log(`rcidBufferBufferLength : ${sign.rcidBuffer.length}`);
 
     // 最后拼上hash
     let packHash = keccak256(pack);
@@ -45,13 +47,13 @@ function Ping(param){
         packHash,
         pack
     ])
-    console.log(`packHashLength : ${packHash.length}`);
+    // console.log(`packHashLength : ${packHash.length}`);
 
     /**
      * 发送ping包的handle
      */
     this.send = async function(){
-        console.log('sending..');
+        console.log('sending.. ping');
         // let sendFile = [];
         // for(var i=0;i<pack.length;i++) {
         //     let temp = `${i}位: ${pack[i]} - ${String.fromCharCode(pack[i])}`;
@@ -59,7 +61,7 @@ function Ping(param){
         //     console.log(temp)
         // }
         // console.log(param)
-        param.socket.send(pack, param.target.udpport, param.target.ip, function(){
+        param.udpSocket.send(pack, param.target.udpport, param.target.ip, function(){
             console.log(`sent`);
         })
     }
@@ -81,8 +83,8 @@ function buildPackSourceBuffer(source, target) {
     /**
      * 构造IP
      */
-    let sourceIp = require(`${__dirname}/Utils`).ipaddress(source.ip);
-    let targetIp = require(`${__dirname}/Utils`).ipaddress(target.ip);
+    let sourceIp = require(`${__dirname}/Utils`).encodeIpaddress(source.ip);
+    let targetIp = require(`${__dirname}/Utils`).encodeIpaddress(target.ip);
 
     let from = [
         sourceIp,
@@ -98,7 +100,7 @@ function buildPackSourceBuffer(source, target) {
 
     // 转换成秒级，再加60秒时间给他到达目标
     let time = +new Date();
-    time = Math.floor(time / 1000) + 60;
+    time = Math.floor(time / 1000) + 1;
 
     let packSource = [
         Config.version,
@@ -109,4 +111,37 @@ function buildPackSourceBuffer(source, target) {
 
     let encodePack = rlp.encode(packSource);
     return encodePack;
+}
+
+/**
+ * Ping包解码（先不可逆了，有个NaN在不知怎么处理好）
+ */
+Ping.prototype.decode = function(msg) {
+    let payload = msg.slice(98);
+    payload = rlp.decode(payload);
+
+    // from（发送ping包的端）
+    payload[1][1] = parseInt(payload[1][1].toString('hex'), 16);
+    payload[1][2] = parseInt(payload[1][2].toString('hex'), 16);
+    payload[1][0] = Utils.decodeIpaddress(payload[1][0]);
+
+    // to 
+    payload[2][1] = parseInt(payload[2][1].toString('hex'), 16);
+    payload[2][2] = parseInt(payload[2][2].toString('hex'), 16);
+    payload[2][0] = Utils.decodeIpaddress(payload[2][0]);
+
+    // 时间戳
+    payload[3] = parseInt(payload[3].toString('hex'), 16);
+
+    let header = msg.slice(0, 98);
+
+    let ping = [
+        header.slice(0, 32), // hash
+        header.slice(32, 96), // sign
+        header.slice(97, 98), // rcid
+        header.slice(98, 99), // package type
+        ...payload
+    ]
+
+    return ping;
 }
