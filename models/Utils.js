@@ -30,7 +30,7 @@ exports.decodeIpaddress = function (buffer) {
  */
 exports.getSignBuffer = function (privateKey, pack) {
     let publicKey = secp256k1.publicKeyCreate(privateKey);
-
+    // console.log(`publickey: ${publicKey}`);
     // 签名 signature, recid
     let sign = secp256k1.ecdsaSign(keccak256(pack), privateKey);
     let signBuffer = Buffer.from(sign.signature);
