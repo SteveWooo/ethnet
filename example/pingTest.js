@@ -22,13 +22,13 @@ const Config = {
  */
 async function handlePong(msg, remote) {
     let pong = Pong.prototype.decode(msg);
-    console.log(pong)
+    // console.log(pong)
 }
 
 async function handlePing(msg, remote) {
     let ping = Ping.prototype.decode(msg);
     console.log('decode ping');
-    console.log(ping);
+    // console.log(ping);
     let pong = new Pong({
         ping : ping,
         privateKey : privateKey,
@@ -40,7 +40,9 @@ async function handlePing(msg, remote) {
 
 async function pingTarget() {
     target = getTarget();
-    privateKey = Utils.getPk();
+    privateKey = Utils.genPrivateKey();
+    // privateKey = 'e97acb74a5bff3ff2dd0c04c9f337112cd1fead7f7eee7463aeb2d9930da1a18';
+    privateKey = Buffer.from(privateKey, 'hex');
     let source = Config.source;
 
     try {
@@ -51,6 +53,8 @@ async function pingTarget() {
             privateKey: privateKey
         })
         await ping.send();
+        let nodeId = Utils.getNodeId(privateKey);
+        console.log(`nodeId: ${nodeId}`);
     } catch (e) {
         console.log(e)
     }
@@ -119,11 +123,3 @@ async function main() {
     await pingTarget();
 }
 main();
-
-
-/**
- * 目标：找到私钥和NodeId的关系，进而能够用NodeId进行XOR运算距离，计算K桶位置
- * 找距离：
- * NodeId: c89eb0f5ac95c96bc0ccfbfc74279924a6ebef063a27ecd42bf136b670e84b6c77d3890882790a49689eb4c632b81ac4fcf143a5f6ae36e959990c0b5bb32b06
- * 公钥: 2,200,158,176,245,172,149,201,107,192,204,251,252,116,39,153,36,166,235,239,6,58,39,236,212,43,241,54,182,112,232,75,108
- */

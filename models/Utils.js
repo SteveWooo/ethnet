@@ -1,7 +1,8 @@
 const crypto = require('crypto');
 const secp256k1 = require('secp256k1'); // 签名用
 const keccak256 = require('keccak256'); // 哈希用
-exports.getPk = function() {
+const elliptic = require('elliptic');
+exports.genPrivateKey = function() {
     let privateKey = crypto.randomBytes(32);
     return privateKey;
 }
@@ -29,8 +30,6 @@ exports.decodeIpaddress = function (buffer) {
  * 签名Buffer
  */
 exports.getSignBuffer = function (privateKey, pack) {
-    let publicKey = secp256k1.publicKeyCreate(privateKey);
-    // console.log(`publickey: ${publicKey}`);
     // 签名 signature, recid
     let sign = secp256k1.ecdsaSign(keccak256(pack), privateKey);
     let signBuffer = Buffer.from(sign.signature);
@@ -53,4 +52,20 @@ exports.readMsg = function(msg) {
         data.push(temp);
     }
     // require('fs').writeFileSync(`${__dirname}/../PongDemo`, data.join('\n'));
+}
+
+/**
+ * 根据以太坊的规则，利用密钥生成NodeId
+ */
+exports.getNodeId = function(privateKey) {
+    let publicKey = secp256k1.publicKeyCreate(privateKey, false);
+    let nodeId = '';
+    for(var i=1;i<publicKey.length;i++) {
+        let str = publicKey[i].toString(16);
+        if(str.length == 1) {
+            str = '0' + str
+        }
+        nodeId += str;
+    }
+    return nodeId;
 }
