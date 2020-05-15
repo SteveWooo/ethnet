@@ -1,4 +1,5 @@
-const keccak256 = require('keccak256'); // 哈希用
+const ethUtils = require('ethereumjs-util');
+const keccak256 = ethUtils.keccak256; // 哈希用
 const rlp = require('rlp');
 const Utils = require(`${__dirname}/Utils`);
 const Config = {

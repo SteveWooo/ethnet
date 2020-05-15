@@ -1,4 +1,5 @@
-const keccak256 = require('keccak256'); // 哈希用
+const ethUtils = require('ethereumjs-util');
+const keccak256 = ethUtils.keccak256; // 哈希用
 const Utils = require(`${__dirname}/Utils`);
 const rlp = require('rlp');
 const Config = {
@@ -58,8 +59,8 @@ function Pong(param) {
      */
     this.send = async function () {
         console.log('sending.. pong');
-        console.log('decode pong:');
-        console.log(Pong.prototype.decode(pack));
+        // console.log('decode pong:');
+        // console.log(Pong.prototype.decode(pack));
         param.udpSocket.send(pack, target.udpport, target.ip, function () {
             console.log(`sent`);
         })    
