@@ -79,6 +79,22 @@ exports.getNodeId = function(privateKey) {
  * 所以最大的距离是Math.pow(2, 256)-1
  */
 exports.calculateDistance = function(nodeIdfrom, nodeIdTo) {
+
+    nodeIdfrom = Buffer.from(nodeIdfrom, 'hex').slice(0, 32);
+    nodeIdTo = Buffer.from(nodeIdTo, 'hex').slice(0, 32);
+    console.log(nodeIdfrom)
+    let totalXOR = [];
+    for(var i=0;i<nodeIdfrom.length;i++) {
+        let dis = nodeIdfrom[i] ^ nodeIdTo[i];
+        dis = dis.toString(2);
+        while(dis.length<8) {
+            dis = '0' + dis;
+        }
+        totalXOR.push(dis);
+    }
+    totalXOR = parseInt(totalXOR.join(''), 2);
+    console.log(totalXOR);
+    console.log(Math.pow(2, 256) - 1);
     
     // nodeIdfrom = toBinary(nodeIdfrom);
     // nodeIdTo = toBinary(nodeIdTo);
