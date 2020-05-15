@@ -41,7 +41,7 @@ async function handlePing(msg, remote) {
 async function pingTarget() {
     target = getTarget();
     privateKey = Utils.genPrivateKey();
-    // privateKey = 'e97acb74a5bff3ff2dd0c04c9f337112cd1fead7f7eee7463aeb2d9930da1a18';
+    privateKey = 'e97acb74a5bff3ff2dd0c04c9f337112cd1fead7f7eee7463aeb2d9930da1a18';
     privateKey = Buffer.from(privateKey, 'hex');
     let source = Config.source;
 
@@ -52,9 +52,9 @@ async function pingTarget() {
             udpSocket: udpSocket,
             privateKey: privateKey
         })
-        await ping.send();
+        // await ping.send();
         let nodeId = Utils.getNodeId(privateKey);
-        console.log(`nodeId: ${nodeId}`);
+        console.log(`nodeId: ${nodeId.length}`);
     } catch (e) {
         console.log(e)
     }
@@ -122,4 +122,42 @@ async function main() {
     tcpSocket = await initTcpSocket(Config);
     await pingTarget();
 }
-main();
+// main();
+
+async function testDis(){
+    let targetNodeId = 'aa34b3a6c61f3ea12387612b20fb2bc71d0a121649f08c3d9c5c1174b3baf52f99e2e5572aa5e1bcdc9a42c7e7c11d62b9985be6a44dd1164da2f5c0455ead65';
+
+    console.log(Buffer.from(targetNodeId, 'hex').length)
+    return ;
+
+    let farString = '';
+    let closeString = '';
+    // let closest = Utils.calculateDistance('1111111111111111111111111111111111111111111111111111111111111111', 
+    // '0000000000000000000000000000000000000000000000000000000000000000');
+
+    for(var i=0;i<64;i++) {
+        farString += String.fromCharCode(255);
+    }
+    for(var i=0;i<64;i++) {
+        closeString += String.fromCharCode(0);
+    }
+    let closest = Utils.calculateDistance(farString, closeString);
+
+    console.log(closest);
+    console.log(Math.pow(2, 256) - 1);
+    return ;
+    let privateKey = Utils.genPrivateKey();
+    let nodeId = Utils.getNodeId(privateKey);
+    let dis = Utils.calculateDistance(targetNodeId, nodeId);
+    while(true) {
+        privateKey = Utils.genPrivateKey();
+        nodeId = Utils.getNodeId(privateKey);
+        dis = Utils.calculateDistance(targetNodeId, nodeId);
+        if(dis < closest){
+            console.log(dis);
+            closest = dis;
+        }
+    }
+}
+
+testDis();

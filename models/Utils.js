@@ -69,3 +69,47 @@ exports.getNodeId = function(privateKey) {
     }
     return nodeId;
 }
+
+/**
+ * 计算两个NodeId的hash距离
+ * 传入的nodeId是一个128位的字符串，它本身是一个16进制字符串，要先转换成16进制Buffer，Buffer.from(nodeId, 'hex)，它会变成64位buffer
+ * 由于以太坊只有256个K桶，所以它只会对照前32位
+ * 32位 * 8bit/位 = 256 bit，所以nodeid进行距离比较之前，要先slice(0, 32)
+ * 这32位Buffer中每一位都能转换成8bit二进制，用这个二进制对比距离。
+ * 所以最大的距离是Math.pow(2, 256)-1
+ */
+exports.calculateDistance = function(nodeIdfrom, nodeIdTo) {
+    
+    // nodeIdfrom = toBinary(nodeIdfrom);
+    // nodeIdTo = toBinary(nodeIdTo);
+
+    // function toBinary(nid) {
+    //     // 转换nodeId为8位二进制
+    //     let res = [];
+    //     for(var i=0;i<nid.length;i++) {
+    //         let char = nid[i].charCodeAt(0).toString(2);
+    //         while(char.length<8) {
+    //             char = '0' + char;
+    //         }
+    //         res.push(char);
+    //     }
+    //     // res = res.join('');
+    //     return res;
+    // }
+
+    // // console.log(`nodeId1: ${nodeId1}`);
+    // // console.log(`nodeId2: ${nodeId2}`);
+    
+    // let totalXOR = [];
+    // for(var i=0;i<nodeIdfrom.length;i++) {
+    //     let dis = (parseInt(nodeIdfrom[i], 2) ^ parseInt(nodeIdTo[i], 2));
+    //     dis = dis.toString(2);
+    //     while(dis.length<8) {
+    //         dis = '0' + dis;
+    //     }
+    //     totalXOR.push(dis);
+    // }
+    // totalXOR = totalXOR.join('');
+
+    // return parseInt(totalXOR, 2);
+}
