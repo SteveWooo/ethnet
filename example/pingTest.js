@@ -43,7 +43,7 @@ async function pingTarget(pk) {
     target = getTarget();
     privateKey = pk || Utils.genPrivateKey();
     
-    // privateKey = 'e97acb74a5bff3ff2dd0c04c9f337112cd1fead7f7eee7463aeb2d9930da1a18';
+    privateKey = myPrivateKey;
     privateKey = Buffer.from(privateKey, 'hex');
     let source = Config.source;
 
@@ -128,9 +128,9 @@ async function main() {
     tcpSocket = await initTcpSocket(Config);
     await pingTarget();
 }
-// main();
+main();
 
-let targetNodeId = '1d938293eed6b215b886c9c17d29d2da2eb5bf41de2db3905e11a33b20fa831592f30f1327361d3c3aec8aa123319b88fca33122a30e60ca041b56f34fd84629';
+let targetNodeId = '00e9cb8f8fe4f5b3b0422278a0e36605041f7268cb0e111d7e141a6fcc5c6e059ff8b610ead2b44fb66907d3115ae5be356d6eca2cde8a2a43262bb52c077102';
 let myPrivateKey = 'e97acb74a5bff3ff2dd0c04c9f337112cd1fead7f7eee7463aeb2d9930da1a18';
 async function testDis(){
     // init
@@ -187,7 +187,7 @@ async function testDis(){
         break;
     }
 }
-testDis();
+// testDis();
 
 async function targetTest(){
     udpSocket = await initUdpSocket(Config);

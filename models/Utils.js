@@ -4,7 +4,7 @@ const ethUtils = require('ethereumjs-util');
 const keccak256 = ethUtils.keccak256; // 哈希用
 const elliptic = require('elliptic');
 exports.genPrivateKey = function() {
-    let privateKey = crypto.randomBytes(32);
+    let privateKey = crypto.randomBytes(32).toString('hex');
     return privateKey;
 }
 /**
