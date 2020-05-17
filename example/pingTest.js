@@ -5,6 +5,7 @@ const secp256k1 = require('secp256k1'); // 签名用
 const ethUtils = require('ethereumjs-util');
 const keccak256 = ethUtils.keccak256; // 哈希用
 const crypto = require('crypto');
+const eccrypto = require('eccrypto');
 const dgram = require('dgram');
 const net = require('net');
 const fs = require('fs');
@@ -102,10 +103,13 @@ function initTcpSocket(config){
             console.log('some one connect me !!!!!!!');
             socket.on('data', function(data){
                 console.log('tcp get data:');
-                console.log(data);
+                console.log(data.toString('hex'));
 
-                data = data.slice(1);
-                console.log(rlp.decode(data))
+                eccrypto.decrypt(Buffer.from(myPrivateKey, 'hex'), Buffer.from(data, 'hex')).then(msg=>{
+                    console.log(msg);
+                }).catch(e=>{
+                    console.log(e)
+                });
 
                 // let file = [];
                 // for(var i=0;i<data.length;i++) {
