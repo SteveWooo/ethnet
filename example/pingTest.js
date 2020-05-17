@@ -7,6 +7,7 @@ const keccak256 = ethUtils.keccak256; // 哈希用
 const crypto = require('crypto');
 const dgram = require('dgram');
 const net = require('net');
+const fs = require('fs');
 
 const rlp = require('rlp');
 
@@ -37,6 +38,11 @@ async function handlePing(msg, remote) {
         target : target
     })
     await pong.send();
+
+    // let tcpClient = new net.Socket();
+    // tcpClient.connect(target.tcpport, target.ip, function(){
+    //     console.log('connected');
+    // })
 }
 
 async function pingTarget(pk) {
@@ -96,11 +102,21 @@ function initTcpSocket(config){
             console.log('some one connect me !!!!!!!');
             socket.on('data', function(data){
                 console.log('tcp get data:');
-                console.log(data.toString());
+                console.log(data);
+
+                data = data.slice(1);
+                console.log(rlp.decode(data))
+
+                // let file = [];
+                // for(var i=0;i<data.length;i++) {
+                //     let str = `${i}: ${data[i]} ${data[i].toString(16)} ${String.fromCharCode(data[i])}`;
+                //     file.push(str);
+                // }
+                // fs.writeFileSync(`${__dirname}/../tcphandshakeDemo`, file.join('\n'));
             })
         })
 
-        server.listen(config.tcpport, function(){
+        server.listen(config.source.tcpport, function(){
             console.log(`tcp listen at ${config.source.tcpport}`);
             resolve(server);
         })
@@ -127,10 +143,11 @@ async function main() {
     udpSocket = await initUdpSocket(Config);
     tcpSocket = await initTcpSocket(Config);
     await pingTarget();
+    // console.log(ethUtils)
 }
 main();
 
-let targetNodeId = '00e9cb8f8fe4f5b3b0422278a0e36605041f7268cb0e111d7e141a6fcc5c6e059ff8b610ead2b44fb66907d3115ae5be356d6eca2cde8a2a43262bb52c077102';
+let targetNodeId = '8061b96e7eb6dfbb16f30a172a9ab13566d973c59b36b0f32e66a2c518ed004986cd43389312b30d708b24b7f8610d9d735b54c296082dc07abcec26d5adf0eb';
 let myPrivateKey = 'e97acb74a5bff3ff2dd0c04c9f337112cd1fead7f7eee7463aeb2d9930da1a18';
 async function testDis(){
     // init
